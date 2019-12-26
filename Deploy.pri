@@ -34,8 +34,28 @@
 QT_BIN_DIR = $$replace(QMAKE_QMAKE, ^(\S*/)\S+$, \1) # 获取从QMake执行文件的所在目录得出Qt的bin路径
 QT_DIR = $${QT_BIN_DIR}../ # 获取Qt开发环境路径
 
+QT_AVAILABLE_LIBRARY_LIST = \
+    bluetooth concurrent core declarative designer designercomponents enginio \
+    gamepad gui qthelp multimedia multimediawidgets multimediaquick network nfc \
+    opengl positioning printsupport qml qmltooling quick quickparticles quickwidgets \
+    script scripttools sensors serialport sql svg test webkit webkitwidgets \
+    websockets widgets winextras xml xmlpatterns webenginecore webengine \
+    webenginewidgets 3dcore 3drenderer 3dquick 3dquickrenderer 3dinput 3danimation \
+    3dextras geoservices webchannel texttospeech serialbus webview
+
+for (LIBRARY_MODULE, QT_AVAILABLE_LIBRARY_LIST) {
+    if (contains(QT, $$LIBRARY_MODULE)) {
+        DEPLOY_OPTIONS += --$$LIBRARY_MODULE
+    }
+    else {
+        DEPLOY_OPTIONS += --no-$$LIBRARY_MODULE
+    }
+}
+
 if (contains(QT, quick)) {
     DEPLOY_OPTIONS += --qmldir $${QT_DIR}qml/
+    DEPLOY_OPTIONS -= --no-network
+    DEPLOY_OPTIONS += --network
 }
 
 if (!isEmpty(DESTDIR)) {
