@@ -1,6 +1,6 @@
 # Author: Qt君
 # QQ交流群: 732271126
-# AUTHOR_INFO: 扫码关注微信公众号: [Qt君] 获取最新推送.
+# AUTHOR_INFO: 扫码关注微信公众号: [Qt君] 第一时间获取最新推送.
 #██████████████    ██      ██████████████    ██████████████
 #██          ██  ████  ████    ██  ██        ██          ██
 #██  ██████  ██    ██████              ██    ██  ██████  ██
@@ -53,7 +53,7 @@ message(TARGET_OUT_DIR: $$TARGET_OUT_DIR) # 生成文件的输出目录
 win32 {
     WIN_DEPLOY_BIN = $${QT_DIR}windeployqt.exe # 拼接Qt部署程序的文件(windows平台下为windeployqt.exe)
     QMAKE_POST_LINK += $$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$TARGET_OUT_DIR$${TARGET}.exe  # 编译完成后执行打包命令
-#    QMAKE_POST_LINK += && start $$TARGET_OUT_DIR # 打包完成后自动打开目标路径
+    QMAKE_POST_LINK += && start $$TARGET_OUT_DIR # 打包完成后自动打开目标路径
 }
 
 message(QMAKE_POST_LINK: $$QMAKE_POST_LINK) # 打印命令
