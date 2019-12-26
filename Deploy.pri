@@ -31,7 +31,12 @@
 #██          ██  ██    ██    ████    ██  ████  ██████  ██
 #██████████████  ██████████      ██            ████  ██
 
-QT_DIR = $$replace(QMAKE_QMAKE, ^(\S*/)\S+$, \1) # 获取从QMake执行文件的所在目录得出Qt路径
+QT_BIN_DIR = $$replace(QMAKE_QMAKE, ^(\S*/)\S+$, \1) # 获取从QMake执行文件的所在目录得出Qt的bin路径
+QT_DIR = $${QT_BIN_DIR}../ # 获取Qt开发环境路径
+
+if (contains(QT, quick)) {
+    DEPLOY_OPTIONS += --qmldir $${QT_DIR}qml/
+}
 
 if (!isEmpty(DESTDIR)) {
     TARGET_OUT_DIR = $$OUT_PWD/$$DESTDIR/
@@ -51,7 +56,7 @@ else {
 message(TARGET_OUT_DIR: $$TARGET_OUT_DIR) # 生成文件的输出目录
 
 win32 {
-    WIN_DEPLOY_BIN = $${QT_DIR}windeployqt.exe # 拼接Qt部署程序的文件(windows平台下为windeployqt.exe)
+    WIN_DEPLOY_BIN = $${QT_BIN_DIR}windeployqt.exe # 拼接Qt部署程序的文件(windows平台下为windeployqt.exe)
     QMAKE_POST_LINK += $$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$TARGET_OUT_DIR$${TARGET}.exe  # 编译完成后执行打包命令
     QMAKE_POST_LINK += && start $$TARGET_OUT_DIR # 打包完成后自动打开目标路径
 }
