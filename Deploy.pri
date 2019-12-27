@@ -52,7 +52,7 @@
 DEPLOY_COMPLETE_AUTO_OPEN_EXPLORER = hello world
 
     # 是否开启实验性功能 #
-    # 需要屏蔽实验性共功能只需注释即可 #
+    # 需要屏蔽实验性功能只需注释即可 #
     # 默认不开启 #
 #EXPERIMENTAL = hello world # 优化qmake执行速度
 # --- [end]输入参数[end] --- #
@@ -188,7 +188,7 @@ QT_AVAILABLE_LIBRARY_LIST = \
     webenginewidgets 3dcore 3drenderer 3dquick 3dquickrenderer 3dinput 3danimation \
     3dextras geoservices webchannel texttospeech serialbus webview
 
-# 扫描`QT`变量用于打包模块的参数配置
+# 扫描QT变量用于打包模块的参数配置
 for (LIBRARY_MODULE, QT_AVAILABLE_LIBRARY_LIST) {
     if (contains(QT, $$LIBRARY_MODULE)) {
         DEPLOY_OPTIONS += --$$LIBRARY_MODULE
@@ -214,7 +214,7 @@ if (!isEmpty(DESTDIR)) {
     TARGET_OUT_DIR = $$OUT_PWD/$$DESTDIR/
 }
 else {
-    # 判断时debug版本还是release版本
+    # 判断是debug版本还是release版本
     CONFIG(debug, debug|release) {
         TARGET_OUT_DIR = $${OUT_PWD}/debug/
         DEPLOY_OPTIONS += --debug
