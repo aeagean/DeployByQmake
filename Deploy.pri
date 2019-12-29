@@ -150,12 +150,7 @@ defineReplace(get_copy_qml_library_cmd_line) {
             dest   = $${target_out_dir}QtQuick/$${qml_module}
         }
 
-        win32 {
-            source = $$replace(source, /, \\)
-            dest   = $$replace(dest, /, \\)
-        }
 
-        copy_qml_quick_module_file_cmd_line = $$QMAKE_COPY_DIR $$source $$dest # 复制Qml模块到指定目录
 
         # 复制qml模块(dll)(命令行)
         CONFIG(debug, debug|release) {
@@ -165,9 +160,14 @@ defineReplace(get_copy_qml_library_cmd_line) {
             qml_module_params = $${qt_bin_dir}Qt5Quick$${qml_module}.dll $${target_out_dir}
         }
 
-        win32 {
+        # 判断平台是/还是\为路径符
+        equals(QMAKE_DIR_SEP, \\) {
+            source = $$replace(source, /, \\)
+            dest   = $$replace(dest, /, \\)
             qml_module_params = $$replace(qml_module_params, /, \\)
         }
+
+        copy_qml_quick_module_file_cmd_line = $$QMAKE_COPY_DIR $$source $$dest # 复制Qml模块到指定目录
         copy_qml_module_cmd_line = $$QMAKE_COPY_FILE $$qml_module_params
 
         cmd_line += && $$copy_qml_quick_module_file_cmd_line
