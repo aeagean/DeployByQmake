@@ -198,6 +198,40 @@ defineReplace(processing_slash) {
     return ($$tmp)
 }
 
+defineReplace(is_debug) {
+    CONFIG(debug, debug|release): return (true)
+    return (false)
+}
+
+# 目前仅支持window系统
+defineReplace(get_copy_system_library_to_target_dir_cmd_line) {
+    target = $$1
+    !win32-msvc*: return (true)
+
+    contains(QMAKE_HOST.arch, x86_64) {
+        # 64bit
+        system_dir = C:\Windows\SysWOW64
+    }
+    else {
+        # 32bit
+        system_dir = C:\Windows\System32
+    }
+
+    $$is_debug() {
+        cmd_line = $$QMAKE_COPY_FILE $$system_dir\msvcp1?0d.dll $$target
+        cmd_line = $$QMAKE_COPY_FILE $$system_dir\vcruntime*d.dll $$target
+        cmd_line = $$QMAKE_COPY_FILE $$system_dir\ucrtbased.dll $$target
+    }
+    else {
+        cmd_line = $$QMAKE_COPY_FILE $$system_dir\msvcp1?0.dll $$target
+        cmd_line = $$QMAKE_COPY_FILE $$system_dir\vcruntime1?0.dll $$target
+        cmd_line = $$QMAKE_COPY_FILE $$system_dir\ucrtbase.dll $$target
+    }
+    cmd_line += && $$QMAKE_COPY_FILE $$system_dir\api-ms-win-*.dll $$target
+
+    return ($$cmd_line)
+}
+
 # --- [end]函数[end] --- #
 
 # 获取从QMake执行文件的所在目录得出Qt的bin路径
@@ -314,6 +348,7 @@ win32 {
     # 扫描Qml依赖库，并在编译完成后自动复制qml依赖库到目标目录
     QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$DEPLOY_OUT_PUT_DIR, $$RESOURCES)
 
+    QMAKE_POST_LINK += && $$command_warpper($$get_copy_system_library_to_target_dir_cmd_line($$DEPLOY_OUT_PUT_DIR), $$_LINE_)
     !isEmpty(DEPLOY_COMPLETE_AUTO_OPEN_EXPLORER) {
         # 打包完成后自动打开目标路径
         QMAKE_POST_LINK += && start $$DEPLOY_OUT_PUT_DIR
