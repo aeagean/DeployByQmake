@@ -43,11 +43,10 @@
 # --- [end]使用方法[end] --- #
 
 # --- [start]输入参数[start] --- #
-    # 指定打包后的输出目录(未完成)
-    # 默认为程序输出所在目录
-isEmpty(DEPLOY_OUT_PUT_DIR) {
-#    DEPLOY_OUT_PUT_DIR =
-}
+    # 指定打包后的输出目录
+    # 默认为程序pro文件路径的package_output目录(没有则新键)
+isEmpty(DEPLOY_OUT_PUT_DIR): DEPLOY_OUT_PUT_DIR = $$_PRO_FILE_PWD_/package_output
+
     # 是否开启打印信息输出(不会影响主项目的打印输出) #
     # 需要屏蔽打印就将它注释即可 #
     # 默认不开启 #
@@ -183,10 +182,20 @@ defineReplace(get_copy_qml_library_cmd_line) {
     return ($$cmd_line)
 }
 
+# 命令包装，主要附加命令本身打印
 defineReplace(command_warpper) {
     cmd_line = $$1
     line = $$2
     return (echo Execute Command: line: $$line cmd_line: $$cmd_line && $$cmd_line)
+}
+
+# 根据平台处理路径分隔符
+defineReplace(processing_slash) {
+    tmp = $$1
+    # 判断平台是/还是\为路径符
+    equals(QMAKE_DIR_SEP, \\): return ($$replace(tmp, /, \\))
+
+    return ($$tmp)
 }
 
 # --- [end]函数[end] --- #
@@ -277,33 +286,30 @@ win32 {
     WIN_DEPLOY_BIN = $${QT_BIN_DIR}windeployqt.exe
     # 编译输出的执行文件(含文件和目录路径)
     TARGET_OUT_FILE = $$TARGET_OUT_DIR$${TARGET}.exe
+
+    WIN_DEPLOY_BIN = $$processing_slash($$WIN_DEPLOY_BIN)
+    TARGET_OUT_FILE   = $$processing_slash($$TARGET_OUT_FILE)
+
+    DEPLOY_OUT_PUT_DIR = $$absolute_path("&&&Qtjun&&&", $$DEPLOY_OUT_PUT_DIR)
+    DEPLOY_OUT_PUT_DIR = $$replace(DEPLOY_OUT_PUT_DIR, &&&Qtjun&&&,)
+    DEPLOY_OUT_PUT_DIR = $$processing_slash($$DEPLOY_OUT_PUT_DIR)
+
+    TARGET_OUT_DIR = $$processing_slash($$TARGET_OUT_DIR)
+
     # 预编译所在目录的执行文件
     DEPLOY_OUT_PUT_FILE = $$DEPLOY_OUT_PUT_DIR$${TARGET}.exe
-
-    # 判断平台是/还是\为路径符
-    equals(QMAKE_DIR_SEP, \\) {
-        WIN_DEPLOY_BIN = $$replace(WIN_DEPLOY_BIN, /, \\)
-        TARGET_OUT_FILE   = $$replace(TARGET_OUT_FILE, /, \\)
-        DEPLOY_OUT_PUT_FILE = $$replace(DEPLOY_OUT_PUT_FILE, /, \\)
-        DEPLOY_OUT_PUT_DIR = $$replace(DEPLOY_OUT_PUT_DIR, /, \\)
-        TARGET_OUT_DIR = $$replace(TARGET_OUT_DIR, /, \\)
-    }
+    DEPLOY_OUT_PUT_FILE = $$processing_slash($$DEPLOY_OUT_PUT_FILE)
 
     # 复制执行文件到预打包目录
     !equals(DEPLOY_OUT_PUT_DIR, $$TARGET_OUT_DIR) {
-        message($$DEPLOY_OUT_PUT_DIR)
-        message($$TARGET_OUT_DIR)
+        !isEmpty(QMAKE_POST_LINK): QMAKE_POST_LINK += &&
         QMAKE_POST_LINK += $$command_warpper($$QMAKE_MKDIR $$DEPLOY_OUT_PUT_DIR, $$_LINE_)
         QMAKE_POST_LINK += & $$command_warpper($$QMAKE_COPY_FILE $$TARGET_OUT_FILE $$DEPLOY_OUT_PUT_DIR, $$_LINE_)
     }
 
     # 编译完成后执行打包命令
-    isEmpty(QMAKE_POST_LINK) {
-        QMAKE_POST_LINK += $$command_warpper($$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$DEPLOY_OUT_PUT_FILE, $$_LINE_)
-    }
-    else {
-        QMAKE_POST_LINK += && $$command_warpper($$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$DEPLOY_OUT_PUT_FILE, $$_LINE_)
-    }
+    !isEmpty(QMAKE_POST_LINK): QMAKE_POST_LINK += &&
+    QMAKE_POST_LINK += $$command_warpper($$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$DEPLOY_OUT_PUT_FILE, $$_LINE_)
 
     # 扫描Qml依赖库，并在编译完成后自动复制qml依赖库到目标目录
     QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$DEPLOY_OUT_PUT_DIR, $$RESOURCES)
