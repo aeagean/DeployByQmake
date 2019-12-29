@@ -45,8 +45,9 @@
 # --- [start]输入参数[start] --- #
     # 指定打包后的输出目录(未完成)
     # 默认为程序输出所在目录
-DEPLOY_OUT_PUT_DIR =
-
+isEmpty(DEPLOY_OUT_PUT_DIR) {
+    DEPLOY_OUT_PUT_DIR =
+}
     # 是否开启打印信息输出(不会影响主项目的打印输出) #
     # 需要屏蔽打印就将它注释即可 #
     # 默认不开启 #
@@ -180,6 +181,12 @@ defineReplace(get_copy_qml_library_cmd_line) {
 
     return ($$cmd_line)
 }
+
+defineReplace(command_warpper) {
+    cmd_line = $$1
+    return (echo Execute Comand: $$cmd_line && $$cmd_line)
+}
+
 # --- [end]函数[end] --- #
 
 # 获取从QMake执行文件的所在目录得出Qt的bin路径
@@ -252,6 +259,11 @@ else {
     }
 }
 
+# 预打包目标目录
+isEmpty(DEPLOY_OUT_PUT_DIR) {
+    DEPLOY_OUT_PUT_DIR = $$TARGET_OUT_DIR
+}
+
 # 实验性功能
 !isEmpty(EXPERIMENTAL) {
     # 该功能(用于优化qmake调试输出)是否开放还需待定，因为会导致其他未知的问题。
@@ -261,24 +273,45 @@ else {
 win32 {
     # 拼接Qt部署程序的文件(windows平台下为windeployqt.exe)
     WIN_DEPLOY_BIN = $${QT_BIN_DIR}windeployqt.exe
+    # 编译输出的执行文件(含文件和目录路径)
+    TARGET_OUT_FILE = $$TARGET_OUT_DIR$${TARGET}.exe
+    # 预编译所在目录的执行文件
+    DEPLOY_OUT_PUT_FILE = $$DEPLOY_OUT_PUT_DIR$${TARGET}.exe
+
+    # 判断平台是/还是\为路径符
+    equals(QMAKE_DIR_SEP, \\) {
+        WIN_DEPLOY_BIN = $$replace(WIN_DEPLOY_BIN, /, \\)
+        TARGET_OUT_FILE   = $$replace(TARGET_OUT_FILE, /, \\)
+        DEPLOY_OUT_PUT_FILE = $$replace(DEPLOY_OUT_PUT_FILE, /, \\)
+        DEPLOY_OUT_PUT_DIR = $$replace(DEPLOY_OUT_PUT_DIR, /, \\)
+    }
+
+    # 复制执行文件到预打包目录
+    !equals(DEPLOY_OUT_PUT_DIR, TARGET_OUT_DIR) {
+#        message($$DEPLOY_OUT_PUT_DIR)
+#        error($$TARGET_OUT_DIR)
+        QMAKE_POST_LINK += $$command_warpper($$QMAKE_MKDIR $$DEPLOY_OUT_PUT_DIR)
+        QMAKE_POST_LINK += & $$command_warpper($$QMAKE_COPY_FILE $$TARGET_OUT_FILE $$DEPLOY_OUT_PUT_DIR)
+    }
 
     # 编译完成后执行打包命令
-    QMAKE_POST_LINK += $$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$TARGET_OUT_DIR$${TARGET}.exe
+    QMAKE_POST_LINK += && $$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$DEPLOY_OUT_PUT_FILE
 
     # 扫描Qml依赖库，并在编译完成后自动复制qml依赖库到目标目录
-    QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$TARGET_OUT_DIR, $$RESOURCES)
-
-    # 注意：该命令放在最后
-    QMAKE_POST_LINK += && echo ------------------------------Package Success------------------------------
+    QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$DEPLOY_OUT_PUT_DIR, $$RESOURCES)
 
     !isEmpty(DEPLOY_COMPLETE_AUTO_OPEN_EXPLORER) {
         # 打包完成后自动打开目标路径
-        QMAKE_POST_LINK += && start $$TARGET_OUT_DIR
+        QMAKE_POST_LINK += && start $$DEPLOY_OUT_PUT_DIR
     }
+
+    # 注意：该命令放在最后
+    QMAKE_POST_LINK += && echo ------------------------------Package Success------------------------------
 }
 
 # 调试输出
 !isEmpty(DEBUG_LOGGER) {
     message(TARGET_OUT_DIR: $$TARGET_OUT_DIR) # 生成文件的输出目录
+    message(DEPLOY_OUT_PUT_DIR: $$DEPLOY_OUT_PUT_DIR) # 预打包文件的输出目录
     message(QMAKE_POST_LINK: $$QMAKE_POST_LINK) # 打印命令
 }
