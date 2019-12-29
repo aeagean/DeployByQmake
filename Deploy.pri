@@ -105,7 +105,7 @@ defineReplace(find_qml_file) {
 # 获取qml文件中使用到的模块
 defineReplace(get_qml_module_list) {
     qml_file_list = $$1
-    default_qml_module_list = QtQuic.Shapes QtQuick.Particles
+    default_qml_module_list = QtQuick.Shapes QtQuick.Particles
     qml_module_list =
     for (file, qml_file_list) {
         qml_file = $$_PRO_FILE_PWD_/$$file
@@ -150,11 +150,12 @@ defineReplace(get_copy_qml_library_cmd_line) {
             dest   = $${target_out_dir}QtQuick/$${qml_module}
         }
 
-        source = $$replace(source, /, \\)
-        dest   = $$replace(dest, /, \\)
+        win32 {
+            source = $$replace(source, /, \\)
+            dest   = $$replace(dest, /, \\)
+        }
 
-        mkdir_qml_quick_module_dest_cmd_line = cmd /c mkdir $$dest # 创建模块目录在QtQuick
-        copy_qml_quick_module_file_cmd_line = cmd /c xcopy /s/y $$source $$dest # 复制Qml模块到指定目录
+        copy_qml_quick_module_file_cmd_line = $$QMAKE_COPY_DIR $$source $$dest # 复制Qml模块到指定目录
 
         # 复制qml模块(dll)(命令行)
         CONFIG(debug, debug|release) {
@@ -164,11 +165,12 @@ defineReplace(get_copy_qml_library_cmd_line) {
             qml_module_params = $${qt_bin_dir}Qt5Quick$${qml_module}.dll $${target_out_dir}
         }
 
-        qml_module_params = $$replace(qml_module_params, /, \\)
-        copy_qml_module_cmd_line = cmd /c copy $$qml_module_params
+        win32 {
+            qml_module_params = $$replace(qml_module_params, /, \\)
+        }
+        copy_qml_module_cmd_line = $$QMAKE_COPY_FILE $$qml_module_params
 
-        cmd_line += && $$mkdir_qml_quick_module_dest_cmd_line
-        cmd_line += & $$copy_qml_quick_module_file_cmd_line
+        cmd_line += && $$copy_qml_quick_module_file_cmd_line
         cmd_line += && $$copy_qml_module_cmd_line
     }
 
