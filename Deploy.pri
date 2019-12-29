@@ -46,7 +46,7 @@
     # 是否开启打印信息输出(不会影响主项目的打印输出) #
     # 需要屏蔽打印就将它注释即可 #
     # 默认不开启 #
-#DEBUG_LOGGER = hello world
+DEBUG_LOGGER = hello world
 
     # 是否在编译完成后自动打开目标目录
     # 需要屏蔽该功能就将它注释即可 #
@@ -86,11 +86,15 @@ defineReplace(find_qml_file) {
     qml_file_list =
 
     for (resource, resources) {
-        content_lines = $$cat($$resource)
+        # 需要相对路径使用
+        # _PRO_FILE_PWD_
+        resource_file = $$_PRO_FILE_PWD_/$$resource
+        !exists($$resource_file) : error($$resource not found.)
+        content_lines = $$cat($$resource_file)
         for (iter, content_lines) {
             tmp = $$find(iter, <file>.*</file>)
             !isEmpty(tmp) {
-                qml_file_list += $$replace(iter, (<file>(.*)<\/file>), \2)
+                qml_file_list += $$replace(iter, (<file>(.*)</file>), \2)
             }
         }
     }
@@ -101,10 +105,12 @@ defineReplace(find_qml_file) {
 # 获取qml文件中使用到的模块
 defineReplace(get_qml_module_list) {
     qml_file_list = $$1
-    default_qml_module_list = QtQuick.Shapes QtQuick.Particles
+    default_qml_module_list = QtQuic.Shapes QtQuick.Particles
     qml_module_list =
     for (file, qml_file_list) {
-        content_lines = $$cat($$file)
+        qml_file = $$_PRO_FILE_PWD_/$$file
+        !exists($$qml_file) : error($$file not found.)
+        content_lines = $$cat($$qml_file)
         for (iter, content_lines) {
             contains(default_qml_module_list, $$iter) {
                 module_name = $$section(iter, ., 1, 1)
@@ -113,7 +119,6 @@ defineReplace(get_qml_module_list) {
         }
     }
 
-    !isEmpty(DEBUG_LOGGER): message(qml_module_list: $$qml_module_list)
     return ($$qml_module_list)
 }
 
@@ -126,11 +131,10 @@ defineReplace(get_copy_qml_library_cmd_line) {
     cmd_line =
 
     qml_file_list = $$find_qml_file($$resources)
-
     !isEmpty(DEBUG_LOGGER): !isEmpty(qml_file_list): message(result: $$qml_file_list)
 
     qml_module_list = $$get_qml_module_list($$qml_file_list)
-    !isEmpty(DEBUG_LOGGER): !isEmpty(qml_module_list): message($$qml_module_list)
+    !isEmpty(DEBUG_LOGGER): message(qml_module_list: $$qml_module_list)
 
     for (qml_module, qml_module_list) {
         if (equals(qml_module, Particles)) {
@@ -173,9 +177,14 @@ defineReplace(get_copy_qml_library_cmd_line) {
 # --- [end]函数[end] --- #
 
 # 获取从QMake执行文件的所在目录得出Qt的bin路径
-QT_BIN_DIR = $$replace(QMAKE_QMAKE, ^(\S*/)\S+$, \1)
+QT_DIR = $$[QT_INSTALL_PREFIX]/
 # 获取Qt开发环境路径
-QT_DIR = $${QT_BIN_DIR}../
+QT_BIN_DIR = $${QT_DIR}bin/
+
+isEmpty(QT_DIR) {
+    QT_BIN_DIR = $$replace(QMAKE_QMAKE, ^(\S*/)\S+$, \1)
+    QT_DIR = $${QT_BIN_DIR}../
+}
 
 # Qt打包工具参数配置集合
 DEPLOY_OPTIONS += --force
@@ -233,12 +242,6 @@ else {
     CONFIG = $$remove_extra_config_parameter($$CONFIG)
 }
 
-# 调试输出
-!isEmpty(DEBUG_LOGGER) {
-    message(TARGET_OUT_DIR: $$TARGET_OUT_DIR) # 生成文件的输出目录
-    message(QMAKE_POST_LINK: $$QMAKE_POST_LINK) # 打印命令
-}
-
 win32 {
     # 拼接Qt部署程序的文件(windows平台下为windeployqt.exe)
     WIN_DEPLOY_BIN = $${QT_BIN_DIR}windeployqt.exe
@@ -253,4 +256,10 @@ win32 {
         # 打包完成后自动打开目标路径
         QMAKE_POST_LINK += && start $$TARGET_OUT_DIR
     }
+}
+
+# 调试输出
+!isEmpty(DEBUG_LOGGER) {
+    message(TARGET_OUT_DIR: $$TARGET_OUT_DIR) # 生成文件的输出目录
+    message(QMAKE_POST_LINK: $$QMAKE_POST_LINK) # 打印命令
 }
