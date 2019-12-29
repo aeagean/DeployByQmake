@@ -43,10 +43,14 @@
 # --- [end]使用方法[end] --- #
 
 # --- [start]输入参数[start] --- #
+    # 指定打包后的输出目录(未完成)
+    # 默认为程序输出所在目录
+DEPLOY_OUT_PUT_DIR =
+
     # 是否开启打印信息输出(不会影响主项目的打印输出) #
     # 需要屏蔽打印就将它注释即可 #
     # 默认不开启 #
-DEBUG_LOGGER = hello world
+#DEBUG_LOGGER = hello world
 
     # 是否在编译完成后自动打开目标目录
     # 需要屏蔽该功能就将它注释即可 #
@@ -204,22 +208,22 @@ QT_AVAILABLE_LIBRARY_LIST = \
 # 扫描QT变量用于打包模块的参数配置
 for (LIBRARY_MODULE, QT_AVAILABLE_LIBRARY_LIST) {
     if (contains(QT, $$LIBRARY_MODULE)) {
-        DEPLOY_OPTIONS += --$$LIBRARY_MODULE
+        DEPLOY_OPTIONS *= --$$LIBRARY_MODULE
     }
     else {
-        DEPLOY_OPTIONS += --no-$$LIBRARY_MODULE
+        DEPLOY_OPTIONS *= --no-$$LIBRARY_MODULE
     }
 }
 
 # 针对Qml模块配置打包参数
 if (contains(QT, quick)) {
     DEPLOY_OPTIONS -= --no-qml
-    DEPLOY_OPTIONS += --qml
+    DEPLOY_OPTIONS *= --qml
 
     DEPLOY_OPTIONS -= --no-network
-    DEPLOY_OPTIONS += --network
+    DEPLOY_OPTIONS *= --network
 
-    DEPLOY_OPTIONS += --qmldir $${QT_DIR}qml/
+    DEPLOY_OPTIONS *= --qmldir $${QT_DIR}qml/
 }
 
 if (!isEmpty(DESTDIR)) {
@@ -229,12 +233,22 @@ if (!isEmpty(DESTDIR)) {
 else {
     # 判断是debug版本还是release版本
     CONFIG(debug, debug|release) {
-        TARGET_OUT_DIR = $${OUT_PWD}/debug/
-        DEPLOY_OPTIONS += --debug
+        contains(CONFIG, debug_and_release) {
+            TARGET_OUT_DIR = $${OUT_PWD}/debug/
+        }
+        else {
+            TARGET_OUT_DIR = $${OUT_PWD}/
+        }
+        DEPLOY_OPTIONS *= --debug
     }
     else {
-        TARGET_OUT_DIR = $${OUT_PWD}/release/
-        DEPLOY_OPTIONS += --release
+        contains(CONFIG, debug_and_release) {
+            TARGET_OUT_DIR = $${OUT_PWD}/release/
+        }
+        else {
+            TARGET_OUT_DIR = $${OUT_PWD}/
+        }
+        DEPLOY_OPTIONS *= --release
     }
 }
 
