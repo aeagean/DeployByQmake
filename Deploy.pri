@@ -232,6 +232,41 @@ defineReplace(get_copy_system_library_to_target_dir_cmd_line) {
     return ($$cmd_line)
 }
 
+defineReplace(get_third_part_library_cmd_line) {
+    target = $$1
+    lib_file_list =
+    lib_dir_list =
+    lib_prefix =
+    lib_suffix =
+    cmd_line =
+    for (iter, LIBS) {
+        prefix = $$str_member($$iter, 0, 1)
+        content = $$str_member($$iter, 2, -1)
+        equals(prefix, -L) {
+            suffix = $$str_member($$content, -1, -1))
+            !equals(suffix, /): content = $$content/
+            message(-L: $$content)
+            lib_dir_list += $$content
+        }
+        else: equals(prefix, -l) {
+            message(-l: $$content)
+            lib_file_list += $$content
+        }
+    }
+
+    win32: lib_suffix = *.dll
+
+    for (file, lib_file_list) {
+        for (dir, lib_dir_list) {
+            exists($$_PRO_FILE_PWD_/$$dir$$file$$lib_suffix) {
+                cmd_line += && $$QMAKE_COPY_FILE $$processing_slash($$_PRO_FILE_PWD_/$$dir$$file$$lib_suffix $$target)
+            }
+        }
+    }
+
+    message($$cmd_line)
+    return ($$cmd_line)
+}
 # --- [end]函数[end] --- #
 
 # 获取从QMake执行文件的所在目录得出Qt的bin路径
@@ -324,7 +359,7 @@ win32 {
     WIN_DEPLOY_BIN = $$processing_slash($$WIN_DEPLOY_BIN)
     TARGET_OUT_FILE   = $$processing_slash($$TARGET_OUT_FILE)
 
-    DEPLOY_OUT_PUT_DIR = $$absolute_path("&&&Qtjun&&&", $$DEPLOY_OUT_PUT_DIR)
+    DEPLOY_OUT_PUT_DIR = $$absolute_path("&&&Qtjun&&&", $$DEPLOY_OUT_PUT_DIR) #需要fixed
     DEPLOY_OUT_PUT_DIR = $$replace(DEPLOY_OUT_PUT_DIR, &&&Qtjun&&&,)
     DEPLOY_OUT_PUT_DIR = $$processing_slash($$DEPLOY_OUT_PUT_DIR)
 
@@ -348,7 +383,12 @@ win32 {
     # 扫描Qml依赖库，并在编译完成后自动复制qml依赖库到目标目录
     QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$DEPLOY_OUT_PUT_DIR, $$RESOURCES)
 
+    # 复制系统库
     QMAKE_POST_LINK += && $$command_warpper($$get_copy_system_library_to_target_dir_cmd_line($$DEPLOY_OUT_PUT_DIR), $$_LINE_)
+
+    # 扫描复制第三方库
+#    QMAKE_POST_LINK += $$command_warpper($$get_third_part_library_cmd_line($$DEPLOY_OUT_PUT_DIR), $$_LINE_)
+
     !isEmpty(DEPLOY_COMPLETE_AUTO_OPEN_EXPLORER) {
         # 打包完成后自动打开目标路径
         QMAKE_POST_LINK += && start $$DEPLOY_OUT_PUT_DIR
