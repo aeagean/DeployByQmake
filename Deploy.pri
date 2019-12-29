@@ -170,8 +170,8 @@ defineReplace(get_copy_qml_library_cmd_line) {
         copy_qml_quick_module_file_cmd_line = $$QMAKE_COPY_DIR $$source $$dest # 复制Qml模块到指定目录
         copy_qml_module_cmd_line = $$QMAKE_COPY_FILE $$qml_module_params
 
-        cmd_line += && $$copy_qml_quick_module_file_cmd_line
-        cmd_line += && $$copy_qml_module_cmd_line
+        cmd_line += && echo Execute command: $$copy_qml_quick_module_file_cmd_line && $$copy_qml_quick_module_file_cmd_line
+        cmd_line += && echo Execute command: $$copy_qml_module_cmd_line && $$copy_qml_module_cmd_line
     }
 
     return ($$cmd_line)
@@ -253,6 +253,9 @@ win32 {
 
     # 扫描Qml依赖库，并在编译完成后自动复制qml依赖库到目标目录
     QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$TARGET_OUT_DIR, $$RESOURCES)
+
+    # 注意：该命令放在最后
+    QMAKE_POST_LINK += && echo ------------------------------Package Success------------------------------
 
     !isEmpty(DEPLOY_COMPLETE_AUTO_OPEN_EXPLORER) {
         # 打包完成后自动打开目标路径
