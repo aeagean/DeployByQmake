@@ -206,7 +206,7 @@ defineReplace(is_debug) {
 # 目前仅支持window系统
 defineReplace(get_copy_system_library_to_target_dir_cmd_line) {
     target = $$1
-    !win32-msvc*: return (true)
+    !win32-msvc*: return (echo ignore)
 
     contains(QMAKE_HOST.arch, x86_64) {
         # 64bit
@@ -217,6 +217,7 @@ defineReplace(get_copy_system_library_to_target_dir_cmd_line) {
         system_dir = C:\Windows\System32
     }
 
+    # fixed
     $$is_debug() {
         cmd_line = $$QMAKE_COPY_FILE $$system_dir\msvcp1?0d.dll $$target
         cmd_line = $$QMAKE_COPY_FILE $$system_dir\vcruntime*d.dll $$target
