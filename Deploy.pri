@@ -109,7 +109,7 @@ defineReplace(find_qml_file) {
 # 获取qml文件中使用到的模块
 defineReplace(get_qml_module_list) {
     qml_file_list = $$1
-    default_qml_module_list = QtQuick.Shapes QtQuick.Particles
+    default_qml_module_list = QtQuick.Shapes QtQuick.Particles QtQuick.VirtualKeyboard
     qml_module_list =
     for (file, qml_file_list) {
         qml_file = $$_PRO_FILE_PWD_/$$file
@@ -158,10 +158,20 @@ defineReplace(get_copy_qml_library_cmd_line) {
 
         # 复制qml模块(dll)(命令行)
         CONFIG(debug, debug|release) {
-            qml_module_params = $${qt_bin_dir}Qt5Quick$${qml_module}d.dll $${target_out_dir}
+            if (equals(qml_module, VirtualKeyboard)) {
+                qml_module_params = $${qt_bin_dir}Qt5$${qml_module}d.dll $${target_out_dir}
+            }
+            else {
+                qml_module_params = $${qt_bin_dir}Qt5Quick$${qml_module}d.dll $${target_out_dir}
+            }
         }
         else {
-            qml_module_params = $${qt_bin_dir}Qt5Quick$${qml_module}.dll $${target_out_dir}
+            if (equals(qml_module, VirtualKeyboard)) {
+                qml_module_params = $${qt_bin_dir}Qt5$${qml_module}.dll $${target_out_dir}
+            }
+            else {
+                qml_module_params = $${qt_bin_dir}Qt5Quick$${qml_module}.dll $${target_out_dir}
+            }
         }
 
         # 判断平台是/还是\为路径符
