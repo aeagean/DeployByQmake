@@ -373,30 +373,30 @@ win32 {
     # 复制执行文件到预打包目录
     !equals(DEPLOY_OUT_PUT_DIR, $$TARGET_OUT_DIR) {
         !isEmpty(QMAKE_POST_LINK): QMAKE_POST_LINK += &&
-        QMAKE_POST_LINK += $$command_warpper($$QMAKE_MKDIR $$DEPLOY_OUT_PUT_DIR, $$_LINE_)
-        QMAKE_POST_LINK += & $$command_warpper($$QMAKE_COPY_FILE $$TARGET_OUT_FILE $$DEPLOY_OUT_PUT_DIR, $$_LINE_)
+        QMAKE_POST_LINK += $$command_warpper($$QMAKE_MKDIR \"$$DEPLOY_OUT_PUT_DIR\", $$_LINE_)
+        QMAKE_POST_LINK += & $$command_warpper($$QMAKE_COPY_FILE \"$$TARGET_OUT_FILE\" \"$$DEPLOY_OUT_PUT_DIR\", $$_LINE_)
     }
 
     # 编译完成后执行打包命令
     !isEmpty(QMAKE_POST_LINK): QMAKE_POST_LINK += &&
-    QMAKE_POST_LINK += $$command_warpper($$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS $$DEPLOY_OUT_PUT_FILE, $$_LINE_)
+    QMAKE_POST_LINK += $$command_warpper($$WIN_DEPLOY_BIN $$DEPLOY_OPTIONS \"$$DEPLOY_OUT_PUT_FILE\", $$_LINE_)
 
     # 扫描Qml依赖库，并在编译完成后自动复制qml依赖库到目标目录
-    QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, $$DEPLOY_OUT_PUT_DIR, $$RESOURCES)
+    QMAKE_POST_LINK += $$get_copy_qml_library_cmd_line($$QT_DIR, $$QT_BIN_DIR, \"$$DEPLOY_OUT_PUT_DIR\", $$RESOURCES)
 
     # 复制系统库
-    QMAKE_POST_LINK += && $$command_warpper($$get_copy_system_library_to_target_dir_cmd_line($$DEPLOY_OUT_PUT_DIR), $$_LINE_)
+    QMAKE_POST_LINK += && $$command_warpper($$get_copy_system_library_to_target_dir_cmd_line(\"$$DEPLOY_OUT_PUT_DIR\"), $$_LINE_)
 
     # 扫描复制第三方库
 #    QMAKE_POST_LINK += $$command_warpper($$get_third_part_library_cmd_line($$DEPLOY_OUT_PUT_DIR), $$_LINE_)
 
     !isEmpty(DEPLOY_COMPLETE_AUTO_OPEN_EXPLORER) {
         # 打包完成后自动打开目标路径
-        QMAKE_POST_LINK += && start $$DEPLOY_OUT_PUT_DIR
+        QMAKE_POST_LINK += && $$command_warpper(cmd /c explorer \"$$DEPLOY_OUT_PUT_DIR\", $$_LINE_) # FIXME
     }
 
     # 注意：该命令放在最后
-    QMAKE_POST_LINK += && echo ------------------------------Package Success------------------------------
+    QMAKE_POST_LINK += & echo ------------------------------Package Success------------------------------
 }
 
 # 调试输出
